@@ -7,6 +7,7 @@ import {
 import { Button, Container, Label } from '@playcanvas/pcui';
 
 import { Events } from '../events';
+import { SelectOp } from '../edit-ops';
 import { localize } from './localization';
 import { Tooltips } from './tooltips';
 
@@ -289,14 +290,19 @@ class SegmentationPanel extends Container {
         });
 
         segmentButton.on('click', () => {
-            // fire event to select based on mask
+            const selectedSplats = () => {
+                const selected = events.invoke('selection');
+                return selected ? [selected] : [];
+            };
+
             const mask = this.singleViewSegmentationUI.getMask();
-            events.fire(
-                'select.byMask',
-                'set',
-                mask.canvas,
-                mask.context
-            );
+            selectedSplats().forEach((splat: any) => {
+                const selected = events.invoke('select.calculateMask', splat, 'set', mask.canvas, mask.context);
+                if (selected) {
+                    const filter = (i: number) => selected.has(i);
+                    events.fire('edit.add', new SelectOp(splat, 'set', filter));
+                }
+            });
 
             this.uiState = 'normal';
             this.syncUIState();
