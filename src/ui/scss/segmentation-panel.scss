@@ -1,0 +1,31 @@
+@use 'colors.scss' as *;
+
+#segmentation-panel {
+    top: 200px;
+    left: 24px;
+    width: 320px;
+
+    min-height: 250px;
+
+    z-index: 1;
+
+    flex-direction: column;
+    display: flex;
+
+    & > .filter-panel-row {
+        display: flex;
+        flex-direction: row;
+        padding: 2px;
+        height: 28px;
+
+        & > .filter-panel-row-label {
+            flex-grow: 1;
+        }
+    }
+
+    > .filter-panel-control-row {
+        display: flex;
+        flex-direction: row;
+        background-color: $bcg-dark;
+    }
+}

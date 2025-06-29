@@ -5,6 +5,7 @@ import { DataPanel } from './data-panel';
 import { Events } from '../events';
 import { BottomToolbar } from './bottom-toolbar';
 import { ColorPanel } from './color-panel';
+import { SegmentationPanel } from './segmentation-panel';
 import { ExportPopup } from './export-popup';
 import { ImageSettingsDialog } from './image-settings-dialog';
 import { localize, localizeInit } from './localization';
@@ -115,6 +116,7 @@ class EditorUI {
         const scenePanel = new ScenePanel(events, tooltips);
         const viewPanel = new ViewPanel(events, tooltips);
         const colorPanel = new ColorPanel(events, tooltips);
+        const segmentationPanel = new SegmentationPanel(events, tooltips);
         const bottomToolbar = new BottomToolbar(events, tooltips);
         const rightToolbar = new RightToolbar(events, tooltips);
         const modeToggle = new ModeToggle(events, tooltips);
@@ -127,6 +129,7 @@ class EditorUI {
         canvasContainer.append(scenePanel);
         canvasContainer.append(viewPanel);
         canvasContainer.append(colorPanel);
+        canvasContainer.append(segmentationPanel);
         canvasContainer.append(bottomToolbar);
         canvasContainer.append(rightToolbar);
         canvasContainer.append(modeToggle);
