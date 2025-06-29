@@ -6,8 +6,8 @@ import {
 } from '@mediapipe/tasks-vision';
 import { Button, Container, Label } from '@playcanvas/pcui';
 
-import { Events } from '../events';
 import { SelectOp } from '../edit-ops';
+import { Events } from '../events';
 import { localize } from './localization';
 import { Tooltips } from './tooltips';
 
@@ -268,7 +268,7 @@ class SegmentationPanel extends Container {
 
         segmentRow.append(startSegmentButton);
         segmentRow.append(segmentButton);
-        segmentRow.append(cancelButton)
+        segmentRow.append(cancelButton);
         this.append(segmentRow);
 
         this.append(new Label({ class: 'panel-header-spacer' }));
