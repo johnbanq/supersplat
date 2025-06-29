@@ -116,7 +116,7 @@ class EditorUI {
         const scenePanel = new ScenePanel(events, tooltips);
         const viewPanel = new ViewPanel(events, tooltips);
         const colorPanel = new ColorPanel(events, tooltips);
-        const segmentationPanel = new SegmentationPanel(events, tooltips);
+        const segmentationPanel = new SegmentationPanel(events, tooltips, canvas);
         const bottomToolbar = new BottomToolbar(events, tooltips);
         const rightToolbar = new RightToolbar(events, tooltips);
         const modeToggle = new ModeToggle(events, tooltips);
