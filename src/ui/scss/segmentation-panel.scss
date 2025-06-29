@@ -29,3 +29,37 @@
         background-color: $bcg-dark;
     }
 }
+
+.view-list-container {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+}
+
+.view-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.view-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px;
+    border-bottom: 1px solid #eee;
+}
+
+.view-item:last-child {
+    border-bottom: none;
+}
+
+.view-item-text {
+    flex-grow: 1;
+}
+
+.view-item-delete {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
