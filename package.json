@@ -25,6 +25,7 @@
         "build:deps": "npm --prefix ./submodules/supersplat-viewer run build"
     },
     "devDependencies": {
+        "@mediapipe/tasks-vision": "0.10.22-rc.20250304",
         "@playcanvas/eslint-config": "^2.1.0",
         "@playcanvas/pcui": "^5.2.0",
         "@rollup/plugin-image": "^3.0.3",
