@@ -149,7 +149,7 @@ class SingleViewSegmentationUI {
 
     async createSegmenter() {
         const vision = await FilesetResolver.forVisionTasks(
-            'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
+            '/static/lib/segmentation'
         );
         this.interactiveSegmenter = await InteractiveSegmenter.createFromOptions(vision, {
             baseOptions: {

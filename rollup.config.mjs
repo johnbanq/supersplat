@@ -60,6 +60,7 @@ const application = {
                 { src: 'static/images', dest: 'static' },
                 { src: 'static/icons', dest: 'static' },
                 { src: 'static/lib', dest: 'static' },
+                { src: 'node_modules/@mediapipe/tasks-vision/wasm', dest: 'static/lib', destFilename: 'segmentation' },
                 { src: 'static/env/VertebraeHDRI_v1_512.png', dest: 'static/env' }
             ]
         }),
