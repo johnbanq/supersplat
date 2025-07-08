@@ -8,7 +8,6 @@ I am trying to implement a segmentation tool for this codebase, the expected UI 
 
 Please analyze the codebase and point out any snippets or existing code I can refer to fully implement this functionality.
 
-
 ---
 
 Of course. Implementing a segmentation tool with multi-viewpoint selection requires integrating a few different systems already present in the codebase. Here is an analysis of the existing code and a guide on how you can implement the described functionality.
