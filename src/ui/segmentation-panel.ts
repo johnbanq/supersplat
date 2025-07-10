@@ -4,105 +4,12 @@ import {
     InteractiveSegmenterResult,
     RegionOfInterest
 } from '@mediapipe/tasks-vision';
-import { Button, Container, Label, Element as PcuiElement } from '@playcanvas/pcui';
+import { Button, Container, Label, SelectInput } from '@playcanvas/pcui';
 
 import { SelectOp } from '../edit-ops';
 import { Events } from '../events';
 import { localize } from './localization';
 import { Tooltips } from './tooltips';
-import deleteSvg from './svg/delete.svg';
-
-const createSvg = (svgString: string) => {
-    const decodedStr = decodeURIComponent(svgString.substring('data:image/svg+xml,'.length));
-    return new DOMParser().parseFromString(decodedStr, 'image/svg+xml').documentElement;
-};
-
-class ViewItem extends Container {
-    private nameLabel: Label;
-    private mask: Set<number>;
-
-    constructor(name: string, mask: Set<number>, args = {}) {
-        args = {
-            ...args,
-            class: ['view-item']
-        };
-
-        super(args);
-
-        this.mask = mask;
-
-        this.nameLabel = new Label({
-            class: 'view-item-text',
-            text: name
-        });
-
-        const remove = new PcuiElement({
-            dom: createSvg(deleteSvg),
-            class: 'view-item-delete'
-        });
-
-        this.append(this.nameLabel);
-        this.append(remove);
-
-        remove.dom.addEventListener('click', (event: MouseEvent) => {
-            event.stopPropagation();
-            this.emit('removeClicked', this);
-        });
-    }
-
-    getMask() {
-        return this.mask;
-    }
-}
-
-class ViewList extends Container {
-    private items = new Map<string, ViewItem>();
-    private events: Events;
-
-    constructor(events: Events, args = {}) {
-        args = {
-            ...args,
-            class: 'view-list'
-        };
-
-        super(args);
-        this.events = events;
-    }
-
-    addItem(name: string, mask: Set<number>) {
-        const item = new ViewItem(name, mask);
-        this.append(item);
-        this.items.set(name, item);
-
-        item.on('removeClicked', () => {
-            this.removeItem(name);
-            this.events.fire('viewlist.updated');
-        });
-    }
-
-    removeItem(name: string) {
-        const item = this.items.get(name);
-        if (item) {
-            this.remove(item);
-            this.items.delete(name);
-        }
-    }
-
-    clearItems() {
-        this.items.forEach((item, name) => {
-            this.removeItem(name);
-        });
-        this.events.fire('viewlist.updated');
-    }
-
-    getMasks() {
-        const masks: Set<number>[] = [];
-        this.items.forEach(item => {
-            masks.push(item.getMask());
-        });
-        return masks;
-    }
-}
 
 class SingleViewSegmentationUI {
     private mainCanvas: HTMLCanvasElement;
@@ -309,7 +216,7 @@ class SegmentationPanel extends Container {
     private uiState: 'normal' | 'single-view-segment' = 'normal';
     private syncUIState: () => void;
     private singleViewSegmentationUI: SingleViewSegmentationUI;
-    private viewList: ViewList;
+    private operation: 'set' | 'and' | 'or' = 'set';
 
     constructor(events: Events, tooltips: Tooltips, canvas: HTMLCanvasElement, args = {}) {
         args = {
@@ -341,25 +248,52 @@ class SegmentationPanel extends Container {
 
         this.append(header);
 
-        const viewListContainer = new Container({
-            class: 'view-list-container'
-        });
-        this.viewList = new ViewList(events);
-        viewListContainer.append(this.viewList);
-        this.append(viewListContainer);
-
-        const segmentRow = new Container({
+        const mainControls = new Container({
             class: 'filter-panel-row'
         });
 
-        const startSegmentButton = new Button({
+        const segmentViewButton = new Button({
             class: 'control-element',
             text: localize('segmentThisView')
         });
+        mainControls.append(segmentViewButton);
+        this.append(mainControls);
 
-        const segmentButton = new Button({
+        const segmentationControls = new Container({
+            class: 'filter-panel-column',
+            hidden: true
+        });
+
+        const operationRow = new Container({
+            class: 'filter-panel-row'
+        });
+
+        const opLabel = new Label({
+            text: 'Operation:',
+            class: 'op-label'
+        });
+
+        const opSelect = new SelectInput({
+            class: 'segmentation-operation-select',
+            options: [
+                { v: 'set', t: 'Set' },
+                { v: 'and', t: 'And' },
+                { v: 'or', t: 'Or' }
+            ],
+            value: 'set'
+        });
+
+        operationRow.append(opLabel);
+        operationRow.append(opSelect);
+        segmentationControls.append(operationRow);
+
+        const actionRow = new Container({
+            class: 'filter-panel-row'
+        });
+
+        const acceptButton = new Button({
             class: 'control-element',
-            text: localize('segment')
+            text: 'Accept'
         });
 
         const cancelButton = new Button({
@@ -367,10 +301,11 @@ class SegmentationPanel extends Container {
             text: localize('cancel')
         });
 
-        segmentRow.append(startSegmentButton);
-        segmentRow.append(segmentButton);
-        segmentRow.append(cancelButton);
-        this.append(segmentRow);
+        actionRow.append(acceptButton);
+        actionRow.append(cancelButton);
+        segmentationControls.append(actionRow);
+
+        this.append(segmentationControls);
 
         this.append(new Label({ class: 'panel-header-spacer' }));
 
@@ -385,51 +320,53 @@ class SegmentationPanel extends Container {
             this.dom.addEventListener(eventName, (event: Event) => event.stopPropagation());
         });
 
-        startSegmentButton.on('click', () => {
+        segmentViewButton.on('click', () => {
             this.uiState = 'single-view-segment';
             this.syncUIState();
         });
 
-        const applyCombinedMask = () => {
-            const masks = this.viewList.getMasks();
-            if (masks.length === 0) return;
+        opSelect.on('change', (value: string) => {
+            this.operation = value as 'set' | 'and' | 'or';
+        });
 
-            let intersection = new Set(masks[0]);
-            for (let i = 1; i < masks.length; i++) {
-                intersection = new Set([...intersection].filter(x => masks[i].has(x)));
-            }
-
-            const selectedSplats = () => {
-                const selected = events.invoke('selection');
-                return selected ? [selected] : [];
-            };
-
-            selectedSplats().forEach((splat: any) => {
-                const filter = (i: number) => intersection.has(i);
-                events.fire('edit.add', new SelectOp(splat, 'set', filter));
-            });
-        };
-
-        segmentButton.on('click', () => {
+        acceptButton.on('click', () => {
             const selectedSplats = () => {
                 const selected = events.invoke('selection');
                 return selected ? [selected] : [];
             };
 
             const mask = this.singleViewSegmentationUI.getMask();
-            selectedSplats().forEach((splat: any) => {
-                const selectedMask = events.invoke('select.calculateMask', splat, 'set', mask.canvas, mask.context);
-                if (selectedMask) {
-                    this.viewList.addItem(`View ${this.viewList.dom.children.length + 1}`, selectedMask);
-                    applyCombinedMask();
-                }
-            });
+
+            switch (this.operation) {
+                case 'set':
+                    events.fire('select.byMask', 'set', mask.canvas, mask.context);
+                    break;
+                case 'and':
+                    selectedSplats().forEach((splat: any) => {
+                        const state = splat.splatData.getProp('state') as Uint8Array;
+                        const currentSelection = new Set<number>();
+                        for (let i = 0; i < state.length; ++i) {
+                            if (state[i] & 1) {
+                                currentSelection.add(i);
+                            }
+                        }
+
+                        const newSelection = events.invoke('select.calculateMask', splat, 'set', mask.canvas, mask.context);
+                        if (newSelection) {
+                            const intersection = new Set([...currentSelection].filter(i => newSelection.has(i)));
+                            const filter = (i: number) => intersection.has(i);
+                            events.fire('edit.add', new SelectOp(splat, 'set', filter));
+                        }
+                    });
+                    break;
+                case 'or':
+                    events.fire('select.byMask', 'add', mask.canvas, mask.context);
+                    break;
+            }''
 
             this.uiState = 'normal';
             this.syncUIState();
         });
-
-        events.on('viewlist.updated', applyCombinedMask);
 
         cancelButton.on('click', () => {
             this.uiState = 'normal';
@@ -439,9 +376,8 @@ class SegmentationPanel extends Container {
         // endregion
 
         this.syncUIState = () => {
-            startSegmentButton.hidden = this.uiState !== 'normal';
-            segmentButton.hidden = this.uiState !== 'single-view-segment';
-            cancelButton.hidden = this.uiState !== 'single-view-segment';
+            mainControls.hidden = this.uiState !== 'normal';
+            segmentationControls.hidden = this.uiState !== 'single-view-segment';
 
             if (this.uiState === 'single-view-segment') {
                 this.singleViewSegmentationUI.activate();
